@@ -44,4 +44,8 @@ public class UserService {
         response.setId(savedUser.getId());
         return response;
     }
+
+    public Boolean existbyUserId(String userId) {
+        return userRepo.existsById(userId);
+    }
 }
