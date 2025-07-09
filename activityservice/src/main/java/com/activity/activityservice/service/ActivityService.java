@@ -5,12 +5,8 @@ import com.activity.activityservice.dto.ActivityRequest;
 import com.activity.activityservice.dto.ActivityResponse;
 import com.activity.activityservice.model.Activity;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.server.ResponseStatusException;
-import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,13 +17,12 @@ public class ActivityService {
 
     private final ActivityRepo activityRepo;
 
-    private final WebClient userServiceWebClient;
+    private final UserClientService userClientService;
 
     public ActivityResponse trackActivity(ActivityRequest request) {
-       if(!validateUserId(request.getUserId())){
-           throw new RuntimeException("User Id is not valid "+request.getUserId());
+        if(!userClientService.trackActivity(request.getUserId())){
+            throw new RuntimeException("User Id is not valid "+request.getUserId());
         }
-
 
         Activity activity = Activity.builder()
          .userId(request.getUserId())
@@ -39,19 +34,6 @@ public class ActivityService {
          .build();
  Activity savedActivity= activityRepo.save(activity);
  return createActivityResponse(savedActivity);
-    }
-
-    private Boolean validateUserId(String userId) {
-        try{
-            return userServiceWebClient.get()
-                    .uri("/api/users/{userId}/validate", userId)
-                    .retrieve()
-                    .bodyToMono(Boolean.class)
-                    .block();
-        }
-        catch (ResponseStatusException e){
-            throw new ResponseStatusException(e.getStatusCode());
-        }
     }
 
     private ActivityResponse createActivityResponse(Activity savedActivity) {
